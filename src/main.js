@@ -1,0 +1,41 @@
+// ============================================================
+// main.js — Phaser config + game boot
+// ============================================================
+
+const config = {
+    type: Phaser.AUTO,
+    width:  CC.WIDTH,    // 1024
+    height: CC.HEIGHT,   // 768
+    parent: 'game-container',
+    backgroundColor: CC.HEX.BG,
+
+    scale: {
+        mode:       Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+
+    render: {
+        antialias: true,
+        roundPixels: true
+    },
+
+    // No physics — tweens only.
+    scene: [BootScene, MenuScene, SelectScene, PracticeScene, CodexScene]
+};
+
+window.addEventListener('DOMContentLoaded', function() {
+    window._phaserGame = new Phaser.Game(config);
+});
+
+// ── Touch-device hardening (iPad Safari / Chromebook) ─────────
+// Unlock Web Audio on the very first user gesture anywhere (iOS
+// requires audio to start from a gesture). AudioManager.init() is
+// idempotent, so calling it again from the scenes is harmless.
+['pointerdown', 'touchstart', 'keydown'].forEach(function(ev) {
+    window.addEventListener(ev, function unlock() {
+        if (window.CritterCodex && CC.AudioManager) CC.AudioManager.init();
+    }, { once: true, passive: true });
+});
+
+// Suppress the long-press / right-click context menu over the game.
+window.addEventListener('contextmenu', function(e) { e.preventDefault(); });

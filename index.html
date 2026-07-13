@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Critter Codex</title>
+
+    <!-- Installable web app (full-screen on iPad "Add to Home Screen" /
+         Chromebook "Install" → launches standalone with an icon) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1b2233">
+
+    <!-- iOS standalone + home-screen icon -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Critter Codex">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+    <!-- Browser tab icon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container"></div>
+
+    <!-- Phaser 3 -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.88.2/dist/phaser.min.js"></script>
+
+    <!-- Namespace + constants (no dependencies) -->
+    <script src="src/constants.js"></script>
+
+    <!-- Systems (depend on constants) -->
+    <script src="src/systems/SaveManager.js"></script>
+    <script src="src/systems/MasteryEngine.js"></script>
+    <script src="src/systems/DistractorGenerator.js"></script>
+    <script src="src/systems/AudioManager.js"></script>
+
+    <!-- UI components (depend on constants + systems) -->
+    <script src="src/ui/makeCreature.js"></script>
+    <script src="src/ui/XPBar.js"></script>
+    <script src="src/ui/FloatingText.js"></script>
+    <script src="src/ui/DetailPanel.js"></script>
+    <script src="src/ui/EvolutionCelebration.js"></script>
+    <script src="src/ui/ProgressPanel.js"></script>
+
+    <!-- Scenes (depend on systems + UI) -->
+    <script src="src/scenes/BootScene.js"></script>
+    <script src="src/scenes/MenuScene.js"></script>
+    <script src="src/scenes/SelectScene.js"></script>
+    <script src="src/scenes/PracticeScene.js"></script>
+    <script src="src/scenes/CodexScene.js"></script>
+
+    <!-- Game boot -->
+    <script src="src/main.js"></script>
+</body>
+</html>
