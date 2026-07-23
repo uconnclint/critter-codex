@@ -58,7 +58,13 @@
     <script src="src/scenes/PracticeScene.js"></script>
     <script src="src/scenes/CodexScene.js"></script>
 
-    <!-- Game boot -->
+    <!-- Game boot (defines window.__ccStart; not called yet) -->
     <script src="src/main.js"></script>
+
+    <!-- Engine bridge (ES module — builds window.CE / window.CEP, then
+         calls window.__ccStart() to boot the Phaser game). Must be the
+         LAST script: everything above is a classic script and needs to
+         have already run and defined its globals first. -->
+    <script type="module" src="src/engine-bridge.js"></script>
 </body>
 </html>
