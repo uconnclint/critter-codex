@@ -25,12 +25,12 @@ import { fitConfig, installResizeGuards, rotateNotice, pageToLogical, logicalToP
 
 // ── Save: adopt the game's current default shape ──────────────
 // MasteryEngine.save() always writes the full shape below (see
-// src/systems/MasteryEngine.js `save()`); `ops`/`missed` start empty
-// because MasteryEngine.init() itself fills in a blank per-family
-// record (xp:0, lastPracticedAt:0, timesSeen:0) for every operation x
-// family combo whenever a key is missing — it never assumes `ops`
-// already has an entry, so handing it `{}` here behaves exactly like
-// the old SaveManager.load() returning `null` on a fresh profile.
+// src/systems/MasteryEngine.js `save()`). NOTE: an empty `ops` here is
+// NOT equivalent to the old load()-returns-null fresh-profile signal —
+// MasteryEngine.init() only builds its blank per-family records when
+// given null, so SaveManager.load() (the shim) maps "ops has no keys"
+// back to null. These defaults exist for the engine-side merge/adoption
+// machinery, not as a bootable mastery state.
 const SAVE_DEFAULTS = {
     ops: {},                                   // per-op per-family mastery state
     session: { op: 'mul', difficulty: 'easy' }, // last-picked operation/difficulty

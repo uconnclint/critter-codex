@@ -21,14 +21,17 @@ window.CritterCodex.SaveManager = (function() {
         window.CE.save.patch(data);
     }
 
-    // Always returns the live state object (never null) — CE.save
-    // seeds it from saveDefaults ({ ops: {}, session: {...}, missed: {} })
-    // when there's nothing saved yet, which MasteryEngine.init() already
-    // treats identically to the old load()-returns-null case (every
-    // per-family lookup there is a truthiness check, e.g.
-    // `saved && saved.ops && saved.ops[op] && saved.ops[op][family]`).
+    // The OLD contract must hold exactly: null on a fresh profile, the
+    // full blob otherwise. MasteryEngine.init(null) builds its blank
+    // per-op/per-family records itself; init({ ops: {} }) does NOT
+    // backfill missing ops, and isSleepy()'s `state[op][family]` then
+    // crashes MenuScene.create on first boot (found in the Phase 2
+    // browser pass). `ops` only ever gains keys from MasteryEngine.save()
+    // or an adopted cc.save.v1 blob — so "ops has no keys" IS "fresh".
     function load() {
-        return window.CE.save.get();
+        var d = window.CE.save.get();
+        if (!d || !d.ops || Object.keys(d.ops).length === 0) return null;
+        return d;
     }
 
     // Resets to a fresh copy of the defaults and persists immediately
