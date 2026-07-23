@@ -16,10 +16,13 @@ window.__ccStart = function() {
         parent: 'game-container',
         backgroundColor: CC.HEX.BG,
 
-        scale: {
-            mode:       Phaser.Scale.FIT,
-            autoCenter: Phaser.Scale.CENTER_BOTH
-        },
+        // FIT + CENTER_BOTH at 1024x768, via the shared engine preset
+        // (engine/phaser/scale.js). Note: fitConfig() also adds min/max
+        // clamps (+/-25% of the base, so 768x576..1280x960 here) that the
+        // old inline config didn't have — the canvas can no longer scale
+        // arbitrarily small/large inside its parent. Everything else about
+        // FIT/CENTER_BOTH behavior is unchanged.
+        scale: CEP.fitConfig({ width: CC.WIDTH, height: CC.HEIGHT }),
 
         render: {
             antialias: true,
