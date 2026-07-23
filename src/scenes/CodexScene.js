@@ -155,25 +155,31 @@ class CodexScene extends Phaser.Scene {
             fontFamily: '"Baloo 2", sans-serif', fontSize: '28px', fontStyle: '800', color: CC.HEX.CREAM
         }).setOrigin(0.5));
 
-        var b0 = this.makeButton(px, py - 78, 320, 60, '📊 View progress', CC.COLORS.GOLD, CC.HEX.INK, () => {
+        var CEP = window.CEP;
+        var btnOpts = { width: 320, height: 60, fontSize: 24, fontFamily: '"Baloo 2", sans-serif', settings: window.CE.settings };
+
+        var b0 = CEP.button(this, px, py - 78, '📊 View progress', () => {
+            CC.AudioManager.tap();
             layer.destroy();
             new CC.ProgressPanel(this);
-        });
+        }, { ...btnOpts, fill: CC.COLORS.GOLD, textColor: CC.HEX.INK });
         layer.add(b0);
 
-        var b1 = this.makeButton(px, py + 2, 320, 60, 'Simulate a day', CC.COLORS.PANEL_HI, CC.HEX.CREAM, () => {
+        var b1 = CEP.button(this, px, py + 2, 'Simulate a day', () => {
+            CC.AudioManager.tap();
             CC.MasteryEngine.simulateDay(Date.now());
             CC.MasteryEngine.save();
             layer.destroy();
             this.renderCards();
-        });
+        }, { ...btnOpts, fill: CC.COLORS.PANEL_HI, textColor: CC.HEX.CREAM });
         layer.add(b1);
 
-        var b2 = this.makeButton(px, py + 82, 320, 60, 'Reset all progress', CC.COLORS.PANEL_HI, '#e88a8a', () => {
+        var b2 = CEP.button(this, px, py + 82, 'Reset all progress', () => {
+            CC.AudioManager.tap();
             CC.MasteryEngine.reset();
             layer.destroy();
             this.renderCards();
-        });
+        }, { ...btnOpts, fill: CC.COLORS.PANEL_HI, textColor: '#e88a8a' });
         layer.add(b2);
 
         var close = this.add.text(px + pw / 2 - 26, py - ph / 2 + 26, '✕', {
@@ -181,23 +187,6 @@ class CodexScene extends Phaser.Scene {
         }).setOrigin(0.5).setInteractive({ useHandCursor: true });
         close.on('pointerdown', () => layer.destroy());
         layer.add(close);
-    }
-
-    // ── Shared button (returns a centered container) ──
-    makeButton(x, y, w, h, label, fillColor, textColor, onClick) {
-        var box = this.add.container(x, y);
-        var g = this.add.graphics();
-        g.fillStyle(fillColor, 1);
-        g.fillRoundedRect(-w / 2, -h / 2, w, h, 14);
-        var txt = this.add.text(0, 0, label, {
-            fontFamily: '"Baloo 2", sans-serif', fontSize: '24px', fontStyle: '700', color: textColor
-        }).setOrigin(0.5);
-        box.add([g, txt]);
-        box.setSize(w, h).setInteractive({ useHandCursor: true });
-        box.on('pointerover', () => this.tweens.add({ targets: box, scale: 1.04, duration: 90 }));
-        box.on('pointerout',  () => this.tweens.add({ targets: box, scale: 1, duration: 90 }));
-        box.on('pointerdown', () => { CC.AudioManager.tap(); onClick(); });
-        return box;
     }
 
     makeChip(x, y, label, onClick) {

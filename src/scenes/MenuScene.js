@@ -38,15 +38,19 @@ class MenuScene extends Phaser.Scene {
             color: CC.HEX.MUTED
         }).setOrigin(0.5);
 
-        // ── Buttons ──
-        this.makeButton(W / 2, 420, 300, 76, 'Practice', CC.COLORS.GOLD, CC.HEX.INK, () => {
+        // ── Buttons (shared engine button factory — engine/phaser/ui.js) ──
+        var CEP = window.CEP;
+        var btnOpts = { fontSize: 34, fontFamily: '"Baloo 2", sans-serif', settings: window.CE.settings };
+        CEP.button(this, W / 2, 420, 'Practice', () => {
             CC.AudioManager.init();
+            CC.AudioManager.tap();
             this.scene.start('SelectScene');
-        });
-        this.makeButton(W / 2, 512, 300, 68, 'Codex', CC.COLORS.PANEL_HI, CC.HEX.CREAM, () => {
+        }, { ...btnOpts, width: 300, height: 76, fill: CC.COLORS.GOLD, textColor: CC.HEX.INK });
+        CEP.button(this, W / 2, 512, 'Codex', () => {
             CC.AudioManager.init();
+            CC.AudioManager.tap();
             this.scene.start('CodexScene');
-        });
+        }, { ...btnOpts, width: 300, height: 68, fill: CC.COLORS.PANEL_HI, textColor: CC.HEX.CREAM });
 
         // ── "Your critters miss you" return hook ──
         var sleepy = CC.MasteryEngine.totalSleepy(Date.now());
@@ -72,28 +76,5 @@ class MenuScene extends Phaser.Scene {
             txt.setText(m ? '🔇' : '🔊');
         });
         return txt;
-    }
-
-    // Rounded button with label + hover/press feedback.
-    // Built inside a centered container so scaling pivots on the button.
-    makeButton(x, y, w, h, label, fillColor, textColor, onClick) {
-        var box = this.add.container(x, y);
-        var g = this.add.graphics();
-        g.fillStyle(CC.COLORS.INK, 0.35);
-        g.fillRoundedRect(-w / 2, -h / 2 + 5, w, h, 18);
-        g.fillStyle(fillColor, 1);
-        g.fillRoundedRect(-w / 2, -h / 2, w, h, 18);
-
-        var txt = this.add.text(0, 0, label, {
-            fontFamily: '"Baloo 2", sans-serif', fontSize: '34px', fontStyle: '800',
-            color: textColor
-        }).setOrigin(0.5);
-
-        box.add([g, txt]);
-        box.setSize(w, h).setInteractive({ useHandCursor: true });
-        box.on('pointerover', () => this.tweens.add({ targets: box, scale: 1.05, duration: 90 }));
-        box.on('pointerout',  () => this.tweens.add({ targets: box, scale: 1, duration: 90 }));
-        box.on('pointerdown', () => { CC.AudioManager.tap(); onClick(); });
-        return box;
     }
 }

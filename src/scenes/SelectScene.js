@@ -64,12 +64,16 @@ class SelectScene extends Phaser.Scene {
             this.diffCards[d.key] = card;
         });
 
-        // ── Start ──
-        this.makeButton(W / 2, 680, 320, 76, 'Start', CC.COLORS.SUCCESS, CC.HEX.INK, () => {
+        // ── Start (shared engine button factory — engine/phaser/ui.js) ──
+        window.CEP.button(this, W / 2, 680, 'Start', () => {
+            CC.AudioManager.tap();
             CC.session.op = this.selOp;
             CC.session.difficulty = this.selDiff;
             CC.MasteryEngine.save();
             this.scene.start('PracticeScene');
+        }, {
+            width: 320, height: 76, fill: CC.COLORS.SUCCESS, textColor: CC.HEX.INK,
+            fontSize: 34, fontFamily: '"Baloo 2", sans-serif', settings: window.CE.settings
         });
 
         this.refreshSelection();
@@ -110,24 +114,6 @@ class SelectScene extends Phaser.Scene {
             }
         }
         return { box: box, setSelected: setSelected };
-    }
-
-    makeButton(x, y, w, h, label, fillColor, textColor, onClick) {
-        var box = this.add.container(x, y);
-        var g = this.add.graphics();
-        g.fillStyle(CC.COLORS.INK, 0.35);
-        g.fillRoundedRect(-w / 2, -h / 2 + 5, w, h, 18);
-        g.fillStyle(fillColor, 1);
-        g.fillRoundedRect(-w / 2, -h / 2, w, h, 18);
-        var txt = this.add.text(0, 0, label, {
-            fontFamily: '"Baloo 2", sans-serif', fontSize: '34px', fontStyle: '800', color: textColor
-        }).setOrigin(0.5);
-        box.add([g, txt]);
-        box.setSize(w, h).setInteractive({ useHandCursor: true });
-        box.on('pointerover', () => this.tweens.add({ targets: box, scale: 1.05, duration: 90 }));
-        box.on('pointerout',  () => this.tweens.add({ targets: box, scale: 1, duration: 90 }));
-        box.on('pointerdown', () => { CC.AudioManager.tap(); onClick(); });
-        return box;
     }
 
     makeChip(x, y, label, onClick) {
