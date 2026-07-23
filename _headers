@@ -1,0 +1,33 @@
+# _headers — Cloudflare response headers (Workers static assets and Pages both read this file
+# from the deploy root). Long-cache content that never changes URL when it changes; always
+# revalidate HTML/JS/CSS so a shipped fix actually reaches a cached iPad/Chromebook instead of
+# sitting behind a stale cache with no service worker to bust it (game-house-style's "Cache"
+# gotcha). Adjust the path globs below if your game's build output lives under a subfolder
+# (e.g. /public/*, /dist/*) — Cloudflare's `_headers` matcher does not recurse through `*.ext`
+# globs the way a real glob would, so nested asset folders need their own explicit block.
+
+# Hashed/immutable art, audio, and the vendored Phaser build never need revalidation.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/engine/phaser/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Entry points and source — always revalidate so a redeploy is visible on the next load.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate
+
+/ENGINE_VERSION.json
+  Cache-Control: public, max-age=0, must-revalidate
