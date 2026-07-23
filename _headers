@@ -2,9 +2,20 @@
 # from the deploy root). Long-cache content that never changes URL when it changes; always
 # revalidate HTML/JS/CSS so a shipped fix actually reaches a cached iPad/Chromebook instead of
 # sitting behind a stale cache with no service worker to bust it (game-house-style's "Cache"
-# gotcha). Adjust the path globs below if your game's build output lives under a subfolder
-# (e.g. /public/*, /dist/*) — Cloudflare's `_headers` matcher does not recurse through `*.ext`
-# globs the way a real glob would, so nested asset folders need their own explicit block.
+# gotcha).
+#
+# DEVIATION FROM THE CANONICAL clint-engine/templates/_headers, found + fixed here (see this
+# repo's migration report): that template's own comment claims "the `_headers` matcher does not
+# recurse through `*.ext` globs" and ships a blanket `/*.js` rule. Verified empirically instead
+# (wrangler dev + curl, this repo, 2026-07): Cloudflare's `*` DOES cross path segments — a
+# blanket `/*.js` reached 3-levels-deep files fine, but it ALSO reached
+# /engine/phaser/vendor/phaser.min.js, and Cloudflare comma-JOINS Cache-Control from every
+# matching rule rather than letting a more specific rule win — the vendored Phaser build came
+# back as `public, max-age=31536000, immutable, public, max-age=0, must-revalidate`, a broken,
+# self-contradicting header that undermines the immutable long-cache it's supposed to get. Fix:
+# scope revalidation to specific directories that don't nest an immutable subfolder, instead of
+# a blanket /*.js. Worth porting this fix back into the canonical template — every other game
+# that vendors Phaser under engine/phaser/vendor/ and copies /*.js verbatim has the same bug.
 
 # Hashed/immutable art, audio, and the vendored Phaser build never need revalidation.
 /assets/*
@@ -23,8 +34,21 @@
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
 
-/*.js
+# Scoped (not blanket /*.js) so this never overlaps /engine/phaser/vendor/*'s immutable rule
+# above — both /src/* and /engine/core/* recurse into every file below them (confirmed) but
+# neither directory nests an immutable subfolder, so there's nothing for them to collide with.
+/src/*
   Cache-Control: public, max-age=0, must-revalidate
+
+/engine/core/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# The handful of direct engine/phaser/*.js files (ui.js, scale.js, scenes.js, textures.js,
+# muteButton.js, classroom.js, inputs/*.js — siblings of vendor/) are deliberately left WITHOUT
+# an explicit revalidate rule rather than risk a third overlapping pattern: they fall back to
+# the platform's own default asset caching (not immutable/long-lived), so a shipped engine fix
+# still reaches players — just without this file's explicit guarantee. Revisit if that's not
+# good enough in practice.
 
 /*.css
   Cache-Control: public, max-age=0, must-revalidate
