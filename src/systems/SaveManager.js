@@ -1,60 +1,43 @@
 // ============================================================
-// SaveManager — localStorage persistence (per-device)
-// Degrades gracefully to in-memory if storage is unavailable
-// (e.g. a sandboxed iframe), so the game never crashes.
+// SaveManager — thin shim over the shared engine save service.
+//
+// Storage probing, in-memory fallback, debounced writes, the
+// pagehide/visibilitychange auto-flush, and cc.save.v1 legacy
+// adoption all now live in window.CE.save (see engine/core/save.js,
+// wired up in src/engine-bridge.js) — this file keeps the ORIGINAL
+// CC.SaveManager.{save,load,clear} surface so BootScene/MasteryEngine
+// don't need to change at all.
 // ============================================================
 
 window.CritterCodex.SaveManager = (function() {
-    const SAVE_KEY = 'cc.save.v1';
-    const VERSION  = 3;   // v3: + per-operation critter sets & missed-fact memory
 
-    // In-memory mirror, used as a fallback when localStorage is blocked.
-    var memoryBlob = null;
-    var storageOk  = (function() {
-        try {
-            var k = '__cc_probe__';
-            localStorage.setItem(k, '1');
-            localStorage.removeItem(k);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    })();
-
+    // MasteryEngine.save() always passes the full { ops, session,
+    // missed } shape (never a partial update), so patch()'s shallow
+    // Object.assign over those three top-level keys is equivalent to
+    // a full overwrite — just debounced now instead of synchronous
+    // (CE.save's own pagehide/visibilitychange flush still guarantees
+    // nothing is lost on tab close).
     function save(data) {
-        var blob = JSON.stringify({ version: VERSION, data: data });
-        memoryBlob = blob;
-        if (!storageOk) return;
-        try {
-            localStorage.setItem(SAVE_KEY, blob);
-        } catch (e) {
-            console.warn('[SaveManager] Could not save:', e);
-        }
+        window.CE.save.patch(data);
     }
 
+    // Always returns the live state object (never null) — CE.save
+    // seeds it from saveDefaults ({ ops: {}, session: {...}, missed: {} })
+    // when there's nothing saved yet, which MasteryEngine.init() already
+    // treats identically to the old load()-returns-null case (every
+    // per-family lookup there is a truthiness check, e.g.
+    // `saved && saved.ops && saved.ops[op] && saved.ops[op][family]`).
     function load() {
-        var raw = null;
-        if (storageOk) {
-            try { raw = localStorage.getItem(SAVE_KEY); }
-            catch (e) { console.warn('[SaveManager] Could not load:', e); }
-        }
-        if (raw === null) raw = memoryBlob;
-        if (!raw) return null;
-        try {
-            var parsed = JSON.parse(raw);
-            if (parsed.version !== VERSION) { clear(); return null; }
-            return parsed.data || null;
-        } catch (e) {
-            console.warn('[SaveManager] Corrupt save, clearing:', e);
-            clear();
-            return null;
-        }
+        return window.CE.save.get();
     }
 
+    // Resets to a fresh copy of the defaults and persists immediately
+    // (CE.save.reset()) instead of removing the key outright — either
+    // way the next load() comes back blank, which is all MasteryEngine
+    // relies on (it also resets its own in-memory state first via
+    // init(null), independently of this call).
     function clear() {
-        memoryBlob = null;
-        if (!storageOk) return;
-        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+        window.CE.save.reset();
     }
 
     return { save: save, load: load, clear: clear };
