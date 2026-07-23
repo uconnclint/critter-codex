@@ -1,7 +1,12 @@
 // ============================================================
 // AudioManager — Web Audio API SFX + gentle ambient music
 // (no audio files needed). Friendly, soft chiptune for K–4.
-// A mute toggle (persisted) silences everything.
+// Mute is persisted, but now lives in the shared engine settings
+// (window.CE.settings, 'muted' key) instead of a private cc.muted
+// localStorage key — a returning player's old cc.muted choice was
+// adopted into it once, up front, by the legacySettingsReaders in
+// src/engine-bridge.js. New players start MUTED (Clint's Q11
+// standing decision, enforced by core/settings.js's own default).
 // ============================================================
 
 window.CritterCodex.AudioManager = (function() {
@@ -12,10 +17,8 @@ window.CritterCodex.AudioManager = (function() {
     var musicTimer = null;
     var musicStep = 0;
 
-    var MUTE_KEY = 'cc.muted';
-    var muted = (function() {
-        try { return localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { return false; }
-    })();
+    // Always read live from CE.settings — no local cache to go stale.
+    function isMuted() { return !!window.CE.settings.get('muted'); }
 
     var BASE_VOL = 0.35;
 
@@ -29,7 +32,7 @@ window.CritterCodex.AudioManager = (function() {
         try {
             ctx = new (window.AudioContext || window.webkitAudioContext)();
             masterVol = ctx.createGain();
-            masterVol.gain.value = muted ? 0 : BASE_VOL;
+            masterVol.gain.value = isMuted() ? 0 : BASE_VOL;
             masterVol.connect(ctx.destination);
             if (ctx.state === 'suspended') ctx.resume();
             startMusic();
@@ -38,14 +41,13 @@ window.CritterCodex.AudioManager = (function() {
         }
     }
 
-    // ── Mute control (persisted) ──────────────────────────────
-    function isMuted() { return muted; }
+    // ── Mute control (persisted via window.CE.settings) ───────
     function setMuted(m) {
-        muted = !!m;
-        try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (e) {}
-        if (masterVol) masterVol.gain.value = muted ? 0 : BASE_VOL;
+        m = !!m;
+        window.CE.settings.set('muted', m);
+        if (masterVol) masterVol.gain.value = m ? 0 : BASE_VOL;
     }
-    function toggleMuted() { setMuted(!muted); return muted; }
+    function toggleMuted() { var m = !isMuted(); setMuted(m); return m; }
 
     // ── Primitive note ────────────────────────────────────────
     function note(freq, type, vol, t0, dur) {
@@ -73,7 +75,7 @@ window.CritterCodex.AudioManager = (function() {
         musicGain.gain.value = 0.16;
         musicGain.connect(masterVol);
         musicTimer = window.setInterval(function() {
-            if (!ctx || muted) return;
+            if (!ctx || isMuted()) return;
             var t = ctx.currentTime;
             var f = SCALE[musicStep % SCALE.length];
             // gentle melody note
